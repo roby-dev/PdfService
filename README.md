@@ -104,13 +104,20 @@ docker compose down
 
 ```
 PdfService/
+├── backend/                # Flask API (solo /api/*)
+│   ├── app.py
+│   ├── Dockerfile
+│   └── requirements.txt
+├── frontend/               # Angular 21 + Tailwind 4
+│   ├── src/
+│   ├── public/             # fonts + lib (pdf.js, Sortable.js)
+│   ├── Dockerfile          # multi-stage: build Angular -> nginx
+│   └── package.json
 ├── nginx/
-│   ├── nginx.conf          # Configuración nginx (HTTPS + proxy)
-│   └── ssl_password.txt    # Contraseña del certificado (NO commitear)
-├── .env                    # Variables de entorno (NO commitear)
-├── .env.example            # Plantilla de variables
+│   ├── nginx.conf          # SSL + proxy /api -> backend + serve Angular
+│   └── ssl_password.txt    # Contraseña certificado (NO commitear)
+├── .env                    # Variables (NO commitear)
+├── .env.example
 ├── .gitignore
-├── docker-compose.yml
-├── Dockerfile
-└── requirements.txt
+└── docker-compose.yml
 ```
