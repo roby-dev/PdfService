@@ -1,0 +1,7 @@
+nginx/ssl_password.txt
+.env
+__pycache__/
+*.pyc
+*.pyo
+.env
+*.log

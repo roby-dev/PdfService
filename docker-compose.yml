@@ -1,0 +1,18 @@
+services:
+  pdfservice:
+    build: .
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "${PORT_HTTP:-8874}:80"
+      - "${PORT_HTTPS:-8875}:443"
+    volumes:
+      - "./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro"
+      - "./nginx/ssl_password.txt:/etc/nginx/ssl/ssl_password.txt:ro"
+      - "${SSL_CERT_PATH}:/etc/nginx/ssl/server.crt:ro"
+      - "${SSL_KEY_PATH}:/etc/nginx/ssl/server.key:ro"
+    depends_on:
+      - pdfservice
+    restart: unless-stopped

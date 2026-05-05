@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reordenar y Rotar PDF</title>
+    <style>
+        @font-face {
+            font-family: 'Outfit';
+            font-weight: 300;
+            font-style: normal;
+            font-display: swap;
+            src: url('fonts/Outfit-300.ttf') format('truetype');
+        }
+
+        @font-face {
+            font-family: 'Outfit';
+            font-weight: 400;
+            font-style: normal;
+            font-display: swap;
+            src: url('fonts/Outfit-400.ttf') format('truetype');
+        }
+
+        @font-face {
+            font-family: 'Outfit';
+            font-weight: 500;
+            font-style: normal;
+            font-display: swap;
+            src: url('fonts/Outfit-500.ttf') format('truetype');
+        }
+
+        @font-face {
+            font-family: 'Outfit';
+            font-weight: 600;
+            font-style: normal;
+            font-display: swap;
+            src: url('fonts/Outfit-600.ttf') format('truetype');
+        }
+
+        @font-face {
+            font-family: 'Outfit';
+            font-weight: 700;
+            font-style: normal;
+            font-display: swap;
+            src: url('fonts/Outfit-700.ttf') format('truetype');
+        }
+    </style>
+    <script src="lib/pdf.min.js"></script>
+    <script src="lib/Sortable.min.js"></script>
+
+    <style>
+        :root {
+            --primary: #e5322d;
+            --primary-hover: #c92520;
+            --bg-color: #f4f5f7;
+            --card-bg: #ffffff;
+            --text-color: #333;
+            --border-color: #ddd;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        header {
+            width: 100%;
+            background: var(--card-bg);
+            padding: 1rem 0;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        h1 {
+            color: var(--primary);
+            margin: 0;
+            font-size: 1.8rem;
+            font-weight: 700;
+        }
+
+        .nav-links {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-top: 0.6rem;
+        }
+
+        .nav-links a {
+            color: #888;
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            padding: 4px 12px;
+            border-radius: 20px;
+            transition: all 0.25s ease;
+        }
+
+        .nav-links a:hover {
+            color: var(--primary);
+            background: rgba(229, 50, 45, 0.06);
+        }
+
+        .nav-links a.active {
+            color: var(--primary);
+            background: rgba(229, 50, 45, 0.1);
+            font-weight: 600;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 1000px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex-grow: 1;
+        }
+
+        .upload-area {
+            width: 100%;
+            max-width: 600px;
+            border: 2px dashed var(--primary);
+            background: rgba(229, 50, 45, 0.03);
+            border-radius: 12px;
+            padding: 3rem 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 2rem;
+        }
+
+        .upload-area:hover,
+        .upload-area.dragover {
+            background: rgba(229, 50, 45, 0.08);
+            transform: scale(1.01);
+        }
+
+        .upload-area p {
+            margin: 1rem 0 0;
+            font-size: 1.1rem;
+            color: #666;
+        }
+
+        .btn-select {
+            background-color: var(--primary);
+            color: white;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.3s;
+            margin-bottom: 0.5rem;
+            display: inline-block;
+        }
+
+        .btn-select:hover {
+            background-color: var(--primary-hover);
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .info-bar {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .info-bar .file-name {
+            font-weight: 600;
+            color: #555;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .info-bar .file-name svg {
+            width: 18px;
+            height: 18px;
+            color: var(--primary);
+        }
+
+        .info-bar .page-count {
+            color: #888;
+            font-size: 0.9rem;
+        }
+
+        .btn-change-file {
+            background: none;
+            border: 1px solid var(--border-color);
+            color: #666;
+            padding: 6px 16px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .btn-change-file:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .selection-hint {
+            width: 100%;
+            text-align: center;
+            padding: 0.6rem 1rem;
+            background: rgba(229, 50, 45, 0.05);
+            border-radius: 8px;
+            color: #888;
+            font-size: 0.9rem;
+            margin-bottom: 1.2rem;
+        }
+
+        .selection-hint strong {
+            color: var(--primary);
+        }
+
+        #page-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 16px;
+            width: 100%;
+            margin-bottom: 2rem;
+        }
+
+        .page-card {
+            background: var(--card-bg);
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            cursor: grab;
+            transition: transform 0.2s, box-shadow 0.2s;
+            user-select: none;
+            border: 2px solid transparent;
+        }
+
+        .page-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+        }
+
+        .page-card:active {
+            cursor: grabbing;
+        }
+
+        /* Sortable states */
+        .sortable-ghost {
+            opacity: 0.35;
+            background: #f0f0f0;
+        }
+
+        .sortable-chosen {
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.18);
+            border-color: var(--primary);
+        }
+
+        .sortable-drag {
+            opacity: 0.95;
+            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.22);
+        }
+
+        /* Canvas wrapper — fixed container, canvas rotates inside */
+        .canvas-wrapper {
+            width: 100%;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 120px;
+            border: 1px solid #eee;
+            border-radius: 4px;
+            background: #f9f9f9;
+            margin-bottom: 8px;
+            position: relative;
+        }
+
+        .canvas-wrapper canvas {
+            max-width: 100%;
+            height: auto;
+            transition: transform 0.3s ease;
+            display: block;
+        }
+
+        .canvas-wrapper canvas.rot-90 {
+            transform: rotate(90deg) scale(0.72);
+        }
+
+        .canvas-wrapper canvas.rot-180 {
+            transform: rotate(180deg);
+        }
+
+        .canvas-wrapper canvas.rot-270 {
+            transform: rotate(270deg) scale(0.72);
+        }
+
+        /* Card footer */
+        .card-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            gap: 4px;
+        }
+
+        .page-number {
+            font-size: 0.82rem;
+            color: #666;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+
+        .card-actions {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            flex-shrink: 0;
+        }
+
+        .rotation-badge {
+            font-size: 0.72rem;
+            font-weight: 600;
+            color: var(--primary);
+            background: rgba(229, 50, 45, 0.1);
+            padding: 1px 5px;
+            border-radius: 4px;
+            display: none;
+        }
+
+        .btn-rotate {
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid #ddd;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+            transition: all 0.2s;
+            flex-shrink: 0;
+            padding: 0;
+        }
+
+        .btn-rotate:hover {
+            background: white;
+            border-color: var(--primary);
+            transform: scale(1.1);
+            box-shadow: 0 2px 8px rgba(229, 50, 45, 0.2);
+        }
+
+        .btn-rotate svg {
+            width: 14px;
+            height: 14px;
+            color: #555;
+            transition: color 0.2s;
+        }
+
+        .btn-rotate:hover svg {
+            color: var(--primary);
+        }
+
+        /* Controls bar */
+        .controls {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            background: white;
+            padding: 15px 0;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            gap: 16px;
+        }
+
+        .btn-apply {
+            background-color: #333;
+            color: white;
+            font-size: 1.1rem;
+            padding: 12px 36px;
+            border-radius: 50px;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            transition: transform 0.2s, background 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+        }
+
+        .btn-apply:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-apply:hover:not(:disabled) {
+            background-color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        #status {
+            font-weight: 500;
+            color: #666;
+            font-size: 0.95rem;
+        }
+
+        /* Footer */
+        .site-footer {
+            width: 100%;
+            text-align: center;
+            padding: 0.8rem 0 4.5rem;
+            color: #aaa;
+            font-size: 0.75rem;
+            letter-spacing: 0.3px;
+            margin-top: auto;
+            margin-bottom: 20px;
+        }
+
+        .site-footer span {
+            color: #999;
+            font-weight: 500;
+        }
+
+        /* Success Screen */
+        .success-screen {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 3rem 2rem;
+            flex-grow: 1;
+        }
+
+        .success-screen.active {
+            display: flex;
+        }
+
+        .success-icon {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: #e8f5e9;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .success-icon svg {
+            width: 40px;
+            height: 40px;
+            color: #43a047;
+        }
+
+        .success-screen h2 {
+            font-size: 1.6rem;
+            font-weight: 600;
+            color: #333;
+            margin: 0 0 0.5rem;
+        }
+
+        .success-screen p {
+            color: #888;
+            font-size: 0.95rem;
+            margin: 0 0 2rem;
+        }
+
+        .success-screen .btn-download-fallback {
+            color: var(--primary);
+            font-weight: 500;
+            text-decoration: none;
+            font-size: 1rem;
+            margin-bottom: 1.5rem;
+            cursor: pointer;
+            border: none;
+            background: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            transition: background 0.2s;
+        }
+
+        .success-screen .btn-download-fallback:hover {
+            background: rgba(229, 50, 45, 0.06);
+        }
+
+        .success-screen .btn-restart {
+            background: #333;
+            color: #fff;
+            border: none;
+            padding: 12px 36px;
+            border-radius: 50px;
+            font-size: 1.05rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s, transform 0.2s;
+        }
+
+        .success-screen .btn-restart:hover {
+            background: #000;
+            transform: translateY(-2px);
+        }
+
+        /* Loading spinner */
+        .loading-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+            padding: 2rem;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #eee;
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .loading-text {
+            color: #888;
+            font-size: 0.95rem;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <h1>Reordenar y Rotar PDF</h1>
+        <nav class="nav-links">
+            <a href="index.html">Unir PDFs</a>
+            <a href="eliminar.html">Eliminar Páginas</a>
+            <a href="reordenar.html" class="active">Reordenar y Rotar</a>
+        </nav>
+    </header>
+
+    <div class="container" id="main-container">
+        <!-- Drop Zone -->
+        <div class="upload-area" id="drop-area">
+            <button class="btn-select" onclick="document.getElementById('fileInput').click()">Seleccionar archivo
+                PDF</button>
+            <p>o arrastra y suelta un PDF aquí</p>
+            <input type="file" id="fileInput" accept=".pdf">
+        </div>
+
+        <!-- Info bar -->
+        <div class="info-bar" id="info-bar" style="display: none;">
+            <div class="file-name" id="file-name-display">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                    stroke-linejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                </svg>
+                <span id="loaded-file-name"></span>
+            </div>
+            <span class="page-count" id="page-count-display"></span>
+            <button class="btn-change-file" onclick="document.getElementById('fileInput').click()">Cambiar
+                archivo</button>
+        </div>
+
+        <!-- Hint -->
+        <div class="selection-hint" id="selection-hint" style="display: none;">
+            <strong>Arrastrá</strong> las páginas para reordenar · Hacé clic en
+            <strong>↻</strong> para rotar 90°
+        </div>
+
+        <!-- Grid -->
+        <div id="page-grid"></div>
+
+        <!-- Loading -->
+        <div class="loading-container" id="loading" style="display: none;">
+            <div class="spinner"></div>
+            <span class="loading-text">Cargando páginas...</span>
+        </div>
+
+        <!-- Spacer for fixed footer -->
+        <div style="height: 60px;"></div>
+    </div>
+
+    <!-- Success Screen -->
+    <div class="success-screen" id="success-screen">
+        <div class="success-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+        </div>
+        <h2>¡Listo!</h2>
+        <p>Tu PDF reordenado y rotado se descargó correctamente.</p>
+        <button class="btn-download-fallback" id="btn-download-fallback">Si no se descargó, hacé clic aquí</button>
+        <button class="btn-restart" onclick="resetApp()">Volver a empezar</button>
+    </div>
+
+    <footer class="site-footer">
+        <span>Team Desarrollo CMACT</span> · 2026
+    </footer>
+
+    <div class="controls" id="controls-bar" style="display: none;">
+        <button id="applyBtn" class="btn-apply" onclick="applyChanges()" disabled>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            <span>Descargar PDF</span>
+        </button>
+        <span id="status"></span>
+    </div>
+
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'lib/pdf.worker.min.js';
+
+        const dropArea = document.getElementById('drop-area');
+        const fileInput = document.getElementById('fileInput');
+        const pageGrid = document.getElementById('page-grid');
+        const applyBtn = document.getElementById('applyBtn');
+        const statusText = document.getElementById('status');
+        const infoBar = document.getElementById('info-bar');
+        const selectionHint = document.getElementById('selection-hint');
+        const controlsBar = document.getElementById('controls-bar');
+        const loadingEl = document.getElementById('loading');
+
+        let currentFile = null;
+        let currentPdfDoc = null;
+        let totalPages = 0;
+        let pageRotations = new Map(); // original page num → additional degrees (0/90/180/270)
+        let sortableInstance = null;
+        let lastDownloadUrl = null;
+        let lastDownloadName = 'reordenado.pdf';
+
+        // Drag & Drop upload
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(ev => {
+            dropArea.addEventListener(ev, e => { e.preventDefault(); e.stopPropagation(); }, false);
+        });
+        ['dragenter', 'dragover'].forEach(ev => {
+            dropArea.addEventListener(ev, () => dropArea.classList.add('dragover'), false);
+        });
+        ['dragleave', 'drop'].forEach(ev => {
+            dropArea.addEventListener(ev, () => dropArea.classList.remove('dragover'), false);
+        });
+        dropArea.addEventListener('drop', e => {
+            const files = e.dataTransfer.files;
+            if (files.length > 0) processFile(files[0]);
+        }, false);
+        fileInput.addEventListener('change', e => {
+            if (e.target.files.length > 0) processFile(e.target.files[0]);
+            fileInput.value = '';
+        }, false);
+
+        async function processFile(file) {
+            if (file.type !== 'application/pdf') {
+                alert('Solo se permiten archivos PDF: ' + file.name);
+                return;
+            }
+
+            currentFile = file;
+            pageRotations.clear();
+            pageGrid.innerHTML = '';
+            totalPages = 0;
+
+            dropArea.style.display = 'none';
+            loadingEl.style.display = 'flex';
+            infoBar.style.display = 'none';
+            selectionHint.style.display = 'none';
+            controlsBar.style.display = 'none';
+
+            if (sortableInstance) {
+                sortableInstance.destroy();
+                sortableInstance = null;
+            }
+
+            try {
+                const arrayBuffer = await file.arrayBuffer();
+                currentPdfDoc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+                totalPages = currentPdfDoc.numPages;
+
+                document.getElementById('loaded-file-name').textContent = file.name;
+                document.getElementById('page-count-display').textContent = totalPages + ' páginas';
+
+                for (let i = 1; i <= totalPages; i++) {
+                    const page = await currentPdfDoc.getPage(i);
+                    const viewport = page.getViewport({ scale: 0.45 });
+
+                    const canvas = document.createElement('canvas');
+                    canvas.height = viewport.height;
+                    canvas.width = viewport.width;
+                    await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+
+                    const card = document.createElement('div');
+                    card.classList.add('page-card');
+                    card.setAttribute('data-page', i);
+
+                    const wrapper = document.createElement('div');
+                    wrapper.classList.add('canvas-wrapper');
+                    wrapper.appendChild(canvas);
+
+                    const footer = document.createElement('div');
+                    footer.classList.add('card-footer');
+
+                    const label = document.createElement('span');
+                    label.classList.add('page-number');
+                    label.textContent = 'Pág. ' + i;
+
+                    const actions = document.createElement('div');
+                    actions.classList.add('card-actions');
+
+                    const badge = document.createElement('span');
+                    badge.classList.add('rotation-badge');
+
+                    const rotateBtn = document.createElement('button');
+                    rotateBtn.className = 'btn-rotate';
+                    rotateBtn.title = 'Rotar 90°';
+                    rotateBtn.innerHTML = `
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="23 4 23 10 17 10"></polyline>
+                            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                        </svg>
+                    `;
+
+                    rotateBtn.addEventListener('mousedown', e => e.stopPropagation());
+                    rotateBtn.addEventListener('click', e => {
+                        e.stopPropagation();
+                        rotatePage(i, canvas, badge);
+                    });
+
+                    actions.appendChild(badge);
+                    actions.appendChild(rotateBtn);
+                    footer.appendChild(label);
+                    footer.appendChild(actions);
+
+                    card.appendChild(wrapper);
+                    card.appendChild(footer);
+                    pageGrid.appendChild(card);
+                }
+
+                sortableInstance = new Sortable(pageGrid, {
+                    animation: 150,
+                    ghostClass: 'sortable-ghost',
+                    chosenClass: 'sortable-chosen',
+                    dragClass: 'sortable-drag',
+                    onEnd: updateApplyButton,
+                });
+
+                loadingEl.style.display = 'none';
+                infoBar.style.display = 'flex';
+                selectionHint.style.display = 'block';
+                controlsBar.style.display = 'flex';
+                applyBtn.disabled = false;
+                updateApplyButton();
+
+            } catch (err) {
+                console.error('Error loading PDF:', err);
+                alert('Error al cargar el archivo PDF.');
+                loadingEl.style.display = 'none';
+                dropArea.style.display = '';
+            }
+        }
+
+        function rotatePage(pageNum, canvas, badge) {
+            const current = pageRotations.get(pageNum) || 0;
+            const next = (current + 90) % 360;
+            pageRotations.set(pageNum, next);
+
+            canvas.classList.remove('rot-90', 'rot-180', 'rot-270');
+            if (next === 90)  canvas.classList.add('rot-90');
+            if (next === 180) canvas.classList.add('rot-180');
+            if (next === 270) canvas.classList.add('rot-270');
+
+            if (next === 0) {
+                badge.style.display = 'none';
+                badge.textContent = '';
+            } else {
+                badge.style.display = 'inline';
+                badge.textContent = next + '°';
+            }
+
+            updateApplyButton();
+        }
+
+        function updateApplyButton() {
+            let rotatedCount = 0;
+            pageRotations.forEach(deg => { if (deg !== 0) rotatedCount++; });
+
+            const cards = pageGrid.querySelectorAll('.page-card');
+            const currentOrder = Array.from(cards).map(c => parseInt(c.dataset.page));
+            const isReordered = currentOrder.some((p, i) => p !== i + 1);
+
+            const parts = [];
+            if (isReordered) parts.push('orden modificado');
+            if (rotatedCount > 0) parts.push(rotatedCount + (rotatedCount === 1 ? ' página rotada' : ' páginas rotadas'));
+            statusText.textContent = parts.length > 0 ? parts.join(' · ') : 'Sin cambios';
+        }
+
+        async function applyChanges() {
+            if (!currentFile) return;
+
+            applyBtn.disabled = true;
+            applyBtn.querySelector('span').textContent = 'Procesando...';
+            statusText.textContent = 'Generando PDF...';
+
+            const cards = pageGrid.querySelectorAll('.page-card');
+            const order = Array.from(cards).map(c => parseInt(c.dataset.page));
+
+            const rotations = {};
+            pageRotations.forEach((deg, pageNum) => { rotations[pageNum] = deg; });
+
+            const formData = new FormData();
+            formData.append('file', currentFile);
+            formData.append('order', JSON.stringify(order));
+            formData.append('rotations', JSON.stringify(rotations));
+
+            try {
+                const response = await fetch('api/reorder-rotate', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) throw new Error(await response.text());
+
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+
+                const originalName = currentFile.name.replace(/\.pdf$/i, '');
+                a.download = originalName + '_reordenado.pdf';
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+
+                lastDownloadUrl = url;
+                lastDownloadName = originalName + '_reordenado.pdf';
+
+                showSuccessScreen();
+
+            } catch (error) {
+                console.error(error);
+                statusText.textContent = 'Error: ' + error.message;
+                alert('Ocurrió un error al procesar el PDF.');
+                applyBtn.disabled = false;
+                applyBtn.querySelector('span').textContent = 'Descargar PDF';
+            }
+        }
+
+        function showSuccessScreen() {
+            document.getElementById('main-container').style.display = 'none';
+            controlsBar.style.display = 'none';
+            const footer = document.querySelector('.site-footer');
+            if (footer) footer.style.display = 'none';
+
+            document.getElementById('success-screen').classList.add('active');
+
+            document.getElementById('btn-download-fallback').onclick = function () {
+                if (lastDownloadUrl) {
+                    const a = document.createElement('a');
+                    a.href = lastDownloadUrl;
+                    a.download = lastDownloadName;
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                }
+            };
+        }
+
+        function resetApp() {
+            document.getElementById('success-screen').classList.remove('active');
+            document.getElementById('main-container').style.display = '';
+            const footer = document.querySelector('.site-footer');
+            if (footer) footer.style.display = '';
+
+            currentFile = null;
+            currentPdfDoc = null;
+            totalPages = 0;
+            pageRotations.clear();
+            pageGrid.innerHTML = '';
+
+            if (sortableInstance) {
+                sortableInstance.destroy();
+                sortableInstance = null;
+            }
+
+            dropArea.style.display = '';
+            infoBar.style.display = 'none';
+            selectionHint.style.display = 'none';
+            controlsBar.style.display = 'none';
+            applyBtn.disabled = true;
+            applyBtn.querySelector('span').textContent = 'Descargar PDF';
+            statusText.textContent = '';
+
+            if (lastDownloadUrl) {
+                window.URL.revokeObjectURL(lastDownloadUrl);
+                lastDownloadUrl = null;
+            }
+        }
+    </script>
+</body>
+
+</html>
