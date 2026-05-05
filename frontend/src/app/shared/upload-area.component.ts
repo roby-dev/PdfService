@@ -5,11 +5,11 @@ import { ChangeDetectionStrategy, Component, ElementRef, input, output, signal, 
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div
-      class="w-full max-w-[600px] border-2 border-dashed border-brand rounded-xl p-12 text-center cursor-pointer transition mb-8"
+      class="w-full max-w-[900px] border-2 border-dashed border-brand rounded-xl px-6 py-12 sm:px-12 text-center cursor-pointer transition mb-8"
       [class.bg-brand-soft]="dragOver()"
       [class.scale-[1.01]]="dragOver()"
       [class.bg-brand-softer]="!dragOver()"
-      (click)="fileInputRef().nativeElement.click()"
+      (click)="openPicker()"
       (dragenter)="onDragEnter($event)"
       (dragover)="onDragOver($event)"
       (dragleave)="onDragLeave($event)"
@@ -23,7 +23,7 @@ import { ChangeDetectionStrategy, Component, ElementRef, input, output, signal, 
       </button>
       <p class="m-0 mt-4 text-base text-neutral-600">{{ hint() }}</p>
       <input
-        #fileInputRef
+        #fileEl
         type="file"
         class="hidden"
         [accept]="accept()"
@@ -42,7 +42,11 @@ export class UploadAreaComponent {
   readonly filesSelected = output<File[]>();
 
   protected readonly dragOver = signal(false);
-  protected readonly fileInputRef = viewChild.required<ElementRef<HTMLInputElement>>('fileInputRef');
+  private readonly fileEl = viewChild.required<ElementRef<HTMLInputElement>>('fileEl');
+
+  protected openPicker(): void {
+    this.fileEl().nativeElement.click();
+  }
 
   protected onDragEnter(e: DragEvent): void {
     e.preventDefault();
