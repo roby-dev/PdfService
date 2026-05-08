@@ -2,6 +2,11 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 
+export interface ToMarkdownResponse {
+  markdown: string;
+  filename: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class PdfApiService {
   private readonly http = inject(HttpClient);
@@ -26,5 +31,11 @@ export class PdfApiService {
     form.append('order', JSON.stringify(order));
     form.append('rotations', JSON.stringify(rotations));
     return this.http.post(`${this.base}/reorder-rotate`, form, { responseType: 'blob' });
+  }
+
+  toMarkdown(file: File): Observable<ToMarkdownResponse> {
+    const form = new FormData();
+    form.append('file', file);
+    return this.http.post<ToMarkdownResponse>(`${this.base}/to-markdown`, form);
   }
 }

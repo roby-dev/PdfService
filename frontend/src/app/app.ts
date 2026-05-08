@@ -31,6 +31,13 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
         >
           Reordenar y Rotar
         </a>
+        <a
+          routerLink="/markdown"
+          routerLinkActive="text-brand bg-brand-soft font-semibold"
+          class="text-neutral-500 text-sm font-medium px-3 py-1 rounded-full hover:text-brand hover:bg-brand-soft transition"
+        >
+          PDF a Markdown
+        </a>
       </nav>
     </header>
 

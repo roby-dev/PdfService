@@ -17,5 +17,11 @@ export const routes: Routes = [
     loadComponent: () => import('./features/reorder-rotate/reorder-rotate.page').then((m) => m.ReorderRotatePage),
     title: 'Reordenar y Rotar',
   },
+  {
+    path: 'markdown',
+    loadComponent: () => import('./features/to-markdown/to-markdown.page').then((m) => m.ToMarkdownPage),
+    title: 'PDF a Markdown',
+  },
   { path: '**', redirectTo: '' },
 ];
+

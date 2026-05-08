@@ -151,5 +151,32 @@ def reorder_rotate():
         return jsonify({"error": str(e)}), 500
 
 
+@app.route('/api/to-markdown', methods=['POST'])
+def to_markdown():
+    if 'file' not in request.files:
+        return jsonify({"error": "No se envió ningún archivo"}), 400
+
+    file = request.files['file']
+
+    try:
+        import pymupdf4llm
+        import tempfile
+        import os
+
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as tmp:
+            file.save(tmp)
+            tmp_path = tmp.name
+
+        try:
+            md_text = pymupdf4llm.to_markdown(tmp_path)
+        finally:
+            os.unlink(tmp_path)
+
+        return jsonify({"markdown": md_text, "filename": file.filename}), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 if __name__ == '__main__':
     app.run()
