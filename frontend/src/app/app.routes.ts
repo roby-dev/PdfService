@@ -20,7 +20,7 @@ export const routes: Routes = [
   {
     path: 'markdown',
     loadComponent: () => import('./features/to-markdown/to-markdown.page').then((m) => m.ToMarkdownPage),
-    title: 'PDF a Markdown',
+    title: 'Convertir a Markdown',
   },
   { path: '**', redirectTo: '' },
 ];

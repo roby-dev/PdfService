@@ -36,7 +36,7 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
           routerLinkActive="text-brand bg-brand-soft font-semibold"
           class="text-neutral-500 text-sm font-medium px-3 py-1 rounded-full hover:text-brand hover:bg-brand-soft transition"
         >
-          PDF a Markdown
+          A Markdown
         </a>
       </nav>
     </header>

@@ -11,8 +11,9 @@ import { PdfApiService } from '../../core/pdf-api.service';
     <div class="w-[90%] max-w-[1000px] flex flex-col items-center grow">
       @if (!markdownResult()) {
         <app-upload-area
-          buttonLabel="Seleccionar archivo PDF"
-          hint="o arrastra y suelta un PDF aquí"
+          buttonLabel="Seleccionar archivo"
+          hint="o arrastra y suelta un archivo aquí"
+          [accept]="acceptedExtensions"
           [multiple]="false"
           (filesSelected)="onFileSelected($event)"
         />
@@ -109,7 +110,7 @@ import { PdfApiService } from '../../core/pdf-api.service';
             class="bg-neutral-800 text-white text-lg px-10 py-3 rounded-full font-semibold shadow-lg hover:bg-black hover:-translate-y-0.5 transition"
             (click)="reset()"
           >
-            Convertir otro PDF
+            Convertir otro archivo
           </button>
         </app-bottom-bar>
       }
@@ -123,7 +124,7 @@ import { PdfApiService } from '../../core/pdf-api.service';
             [disabled]="!selectedFile() || processing()"
             (click)="convert()"
           >
-            {{ processing() ? 'Convirtiendo...' : 'Convertir a Markdown' }}
+            {{ processing() ? 'Convirtiendo…' : 'Convertir a Markdown' }}
           </button>
         </app-bottom-bar>
       }
@@ -131,6 +132,7 @@ import { PdfApiService } from '../../core/pdf-api.service';
   `,
 })
 export class ToMarkdownPage {
+  protected readonly acceptedExtensions = '.pdf,.docx,.pptx,.xlsx,.xls,.html,.htm,.csv,.json,.xml,.zip,.jpg,.jpeg,.png,.wav,.mp3';
   private readonly api = inject(PdfApiService);
 
   protected readonly selectedFile = signal<File | null>(null);
@@ -142,11 +144,18 @@ export class ToMarkdownPage {
 
   protected readonly renderedHtml = signal('');
 
+  private readonly allowedExtensions = new Set([
+    '.pdf', '.docx', '.pptx', '.xlsx', '.xls',
+    '.html', '.htm', '.csv', '.json', '.xml', '.zip',
+    '.jpg', '.jpeg', '.png', '.wav', '.mp3',
+  ]);
+
   protected onFileSelected(files: File[]): void {
     const file = files[0];
     if (!file) return;
-    if (file.type !== 'application/pdf') {
-      alert('Solo se permiten archivos PDF');
+    const ext = '.' + file.name.split('.').pop()?.toLowerCase();
+    if (!this.allowedExtensions.has(ext)) {
+      alert('Formato no soportado. Formatos aceptados: PDF, DOCX, PPTX, XLSX, HTML, CSV, JSON, XML, ZIP, imágenes y audio.');
       return;
     }
     this.selectedFile.set(file);
@@ -203,15 +212,17 @@ export class ToMarkdownPage {
     const md = this.markdownResult();
     if (!md) return;
 
-    const blob = new Blob([md], { type: 'text/markdown' });
+    const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
+    const baseName = (this.filename() || 'document').replace(/\.[^.\\/]+$/, '') || 'document';
     a.href = url;
-    a.download = this.filename().replace(/\.pdf$/i, '') + '.md';
+    a.download = baseName + '.md';
+    a.rel = 'noopener';
     document.body.appendChild(a);
     a.click();
     a.remove();
-    URL.revokeObjectURL(url);
+    setTimeout(() => URL.revokeObjectURL(url), 0);
   }
 
   protected reset(): void {

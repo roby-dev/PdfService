@@ -159,20 +159,24 @@ def to_markdown():
     file = request.files['file']
 
     try:
-        import pymupdf4llm
+        from markitdown import MarkItDown
         import tempfile
         import os
 
-        with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as tmp:
+        original_name = file.filename or 'document'
+        _, ext = os.path.splitext(original_name)
+
+        with tempfile.NamedTemporaryFile(delete=False, suffix=ext) as tmp:
             file.save(tmp)
             tmp_path = tmp.name
 
         try:
-            md_text = pymupdf4llm.to_markdown(tmp_path)
+            md = MarkItDown()
+            result = md.convert(tmp_path)
         finally:
             os.unlink(tmp_path)
 
-        return jsonify({"markdown": md_text, "filename": file.filename}), 200
+        return jsonify({"markdown": result.text_content, "filename": original_name}), 200
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
