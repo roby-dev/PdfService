@@ -45,6 +45,29 @@ echo "tu-contraseña" > nginx/ssl_password.txt
 
 > Si el certificado **no tiene contraseña**, dejar el archivo vacío o eliminar la línea `ssl_password_file` de `nginx/nginx.conf`.
 
+### 3. Generar Certificados de Prueba (Opcional)
+
+Si no tenés certificados SSL para desarrollo local, podés usar los scripts incluidos en la carpeta `scripts/` para generar certificados autofirmados:
+
+```bash
+# En Linux/Mac
+chmod +x scripts/generate-certs.sh
+./scripts/generate-certs.sh
+
+# En Windows (PowerShell)
+.\scripts\generate-certs.ps1
+```
+
+Esto creará `server.key` y `server.crt` dentro de `scripts/certs/`. Luego, actualizá tu `.env` apuntando a esas rutas absolutas.
+
+---
+
+## Despliegue en Railway (Producción)
+
+Si vas a subir este servicio a **Railway**, tené en cuenta que Railway maneja SSL (HTTPS) de forma automática en su borde (edge). 
+- No necesitás configurar certificados SSL propios en Nginx ni crear el archivo `ssl_password.txt` en producción.
+- Podés configurar Railway para que exponga el puerto HTTP (`80`) de Nginx y el tráfico se servirá bajo HTTPS de forma transparente.
+
 ---
 
 ## Levantar el servicio
