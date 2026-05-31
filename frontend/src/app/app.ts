@@ -45,7 +45,7 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
         </nav>
       </header>
 
-      <main class="flex-grow flex flex-col items-center">
+      <main class="flex-grow flex flex-col w-full">
         <router-outlet />
       </main>
 
