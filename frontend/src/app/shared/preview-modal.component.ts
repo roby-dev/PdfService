@@ -9,7 +9,7 @@ import { ChangeDetectionStrategy, Component, input, output } from '@angular/core
       (click)="close.emit()"
     >
       <div
-        class="bg-white rounded-2xl max-w-[500px] w-full p-4 shadow-2xl relative flex flex-col items-center justify-center"
+        class="bg-white rounded-2xl w-[90vw] max-w-[1000px] max-h-[90vh] p-4 shadow-2xl relative flex flex-col items-center"
         (click)="$event.stopPropagation()"
       >
         <button
@@ -25,11 +25,11 @@ import { ChangeDetectionStrategy, Component, input, output } from '@angular/core
           {{ title() }}
         </div>
 
-        <div class="w-full overflow-hidden flex items-center justify-center rounded-lg border border-neutral-100 bg-neutral-50 p-4 min-h-[300px]">
+        <div class="w-full flex-1 overflow-hidden flex items-center justify-center rounded-lg border border-neutral-100 bg-neutral-50 p-4 min-h-0">
           <img
             [src]="imageUrl()"
             alt="Vista previa"
-            class="max-w-full max-h-[60vh] object-contain transition-transform"
+            class="max-w-full max-h-[80vh] object-contain transition-transform"
             [style.transform]="rotation()"
           />
         </div>
