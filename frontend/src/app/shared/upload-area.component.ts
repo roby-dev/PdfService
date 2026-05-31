@@ -17,7 +17,7 @@ import { ChangeDetectionStrategy, Component, ElementRef, input, output, signal, 
     >
       <button
         type="button"
-        class="bg-brand text-white px-8 py-3 rounded-lg text-base font-semibold hover:bg-brand-hover transition mb-2"
+        class="w-72 max-w-full bg-brand text-white py-3 rounded-lg text-base font-semibold hover:bg-brand-hover transition mb-2"
       >
         {{ buttonLabel() }}
       </button>
