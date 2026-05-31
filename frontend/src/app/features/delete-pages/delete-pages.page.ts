@@ -25,7 +25,7 @@ interface PageThumb {
         (restart)="reset()"
       />
     } @else {
-      <div class="w-[95%] max-w-[1600px] flex flex-col items-center grow">
+      <div class="w-[95%] max-w-[1600px] mx-auto flex flex-col items-center grow">
         @if (!file()) {
           <app-upload-area
             buttonLabel="Seleccionar archivo PDF"

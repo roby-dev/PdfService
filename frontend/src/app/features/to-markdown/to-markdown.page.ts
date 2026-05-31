@@ -8,7 +8,7 @@ import { PdfApiService } from '../../core/pdf-api.service';
   imports: [UploadAreaComponent, BottomBarComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="w-[95%] max-w-[1600px] flex flex-col items-center grow">
+    <div class="w-[95%] max-w-[1600px] mx-auto flex flex-col items-center grow">
       @if (!markdownResult()) {
         <app-upload-area
           buttonLabel="Seleccionar archivo"

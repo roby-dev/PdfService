@@ -29,7 +29,7 @@ interface PdfItem {
         (restart)="reset()"
       />
     } @else {
-      <div class="w-[95%] max-w-[1600px] flex flex-col items-center grow">
+      <div class="w-[95%] max-w-[1600px] mx-auto flex flex-col items-center grow">
         <app-upload-area
           buttonLabel="Seleccionar archivos PDF"
           hint="o arrastra y suelta los PDFs aquí"
