@@ -5,7 +5,7 @@ import { ChangeDetectionStrategy, Component, ElementRef, input, output, signal, 
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div
-      class="w-full max-w-[900px] border-2 border-dashed border-brand rounded-xl px-6 py-12 sm:px-12 text-center cursor-pointer transition mb-8"
+      class="w-full max-w-[900px] border-2 border-dashed border-brand rounded-xl px-6 py-20 sm:py-28 text-center cursor-pointer transition mb-8"
       [class.bg-brand-soft]="dragOver()"
       [class.scale-[1.01]]="dragOver()"
       [class.bg-brand-softer]="!dragOver()"
@@ -22,6 +22,7 @@ import { ChangeDetectionStrategy, Component, ElementRef, input, output, signal, 
         {{ buttonLabel() }}
       </button>
       <p class="m-0 mt-4 text-base text-neutral-600">{{ hint() }}</p>
+      <p class="m-0 mt-1 text-xs text-neutral-400">Tamaño máximo: 10MB por archivo</p>
       <input
         #fileEl
         type="file"
@@ -72,15 +73,41 @@ export class UploadAreaComponent {
     this.dragOver.set(false);
     const files = e.dataTransfer?.files;
     if (files && files.length > 0) {
-      this.filesSelected.emit(Array.from(files));
+      this.processFiles(Array.from(files));
     }
   }
 
   protected onChange(e: Event): void {
     const input = e.target as HTMLInputElement;
     if (input.files && input.files.length > 0) {
-      this.filesSelected.emit(Array.from(input.files));
+      this.processFiles(Array.from(input.files));
       input.value = '';
+    }
+  }
+
+  private processFiles(files: File[]): void {
+    const MAX_SIZE = 10 * 1024 * 1024; // 10MB
+    const validFiles: File[] = [];
+    const oversizedFiles: string[] = [];
+
+    for (const file of files) {
+      if (file.size > MAX_SIZE) {
+        oversizedFiles.push(file.name);
+      } else {
+        validFiles.push(file);
+      }
+    }
+
+    if (oversizedFiles.length > 0) {
+      alert(
+        `Los siguientes archivos superan el límite de 10MB y no fueron cargados:\n${oversizedFiles.join(
+          '\n'
+        )}`
+      );
+    }
+
+    if (validFiles.length > 0) {
+      this.filesSelected.emit(validFiles);
     }
   }
 }

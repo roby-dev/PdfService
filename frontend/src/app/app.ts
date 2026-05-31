@@ -7,7 +7,7 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <header class="w-full bg-white shadow-[0_2px_10px_rgba(0,0,0,0.05)] py-4 text-center mb-8">
-      <h1 class="text-brand text-3xl font-bold m-0">Servicio PDF - CMACT</h1>
+      <h1 class="text-brand text-3xl font-bold m-0">Servicios PDF</h1>
       <nav class="flex justify-center gap-8 mt-2">
         <a
           routerLink="/"
@@ -41,9 +41,16 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
       </nav>
     </header>
 
-    <main class="flex flex-col items-center min-h-[calc(100vh-200px)]">
+    <main class="flex flex-col items-center min-h-[calc(100vh-220px)]">
       <router-outlet />
     </main>
+
+    <footer class="w-full text-center py-6 mt-8 text-neutral-400 text-xs border-t border-neutral-100">
+      <p class="font-medium text-neutral-500 mb-1">
+        🔒 Privacidad garantizada: Los archivos se procesan en memoria y se eliminan inmediatamente tras finalizar la operación. No almacenamos tus documentos.
+      </p>
+      <p>© 2026 - Servicios PDF</p>
+    </footer>
   `,
 })
 export class App { }

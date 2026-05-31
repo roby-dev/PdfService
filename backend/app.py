@@ -2,10 +2,42 @@ from flask import Flask, request, send_file, jsonify
 import pikepdf
 import io
 import json
+import time
+from collections import defaultdict
+from functools import wraps
+
+# Simple in-memory rate limiter (15 requests per minute per IP for processing)
+ip_requests = defaultdict(list)
+
+def limit_rate(limit=15, period=60):
+    def decorator(f):
+        @wraps(f)
+        def wrapped(*args, **kwargs):
+            ip = request.headers.get('X-Forwarded-For', request.remote_addr)
+            if ip and ',' in ip:
+                ip = ip.split(',')[0].strip()
+            
+            now = time.time()
+            # Clean up old timestamps
+            ip_requests[ip] = [t for t in ip_requests[ip] if now - t < period]
+            
+            if len(ip_requests[ip]) >= limit:
+                return jsonify({"error": "Demasiadas peticiones. Por favor, intenta de nuevo más tarde."}), 429
+            
+            ip_requests[ip].append(now)
+            return f(*args, **kwargs)
+        return wrapped
+    return decorator
+
+def is_file_too_large(file, max_size=10 * 1024 * 1024):
+    file.seek(0, 2)
+    size = file.tell()
+    file.seek(0)
+    return size > max_size
 
 app = Flask(__name__)
 
-app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024
+app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024
 
 
 @app.route('/api/health', methods=['GET'])
@@ -14,11 +46,16 @@ def health():
 
 
 @app.route('/api/merge', methods=['POST'])
+@limit_rate(limit=15, period=60)
 def merge_pdfs():
     if 'files' not in request.files:
         return jsonify({"error": "No se enviaron archivos"}), 400
 
     files = request.files.getlist('files')
+
+    for file in files:
+        if is_file_too_large(file):
+            return jsonify({"error": f"El archivo {file.filename} supera el límite de 10MB"}), 400
 
     if len(files) < 2:
         return jsonify({"error": "Se requieren al menos 2 PDFs"}), 400
@@ -52,9 +89,14 @@ def merge_pdfs():
 
 
 @app.route('/api/delete-pages', methods=['POST'])
+@limit_rate(limit=15, period=60)
 def delete_pages():
     if 'file' not in request.files:
         return jsonify({"error": "No se envió ningún archivo"}), 400
+
+    file = request.files['file']
+    if is_file_too_large(file):
+        return jsonify({"error": f"El archivo {file.filename} supera el límite de 10MB"}), 400
 
     if 'pages' not in request.form:
         return jsonify({"error": "No se especificaron páginas a eliminar"}), 400
@@ -99,11 +141,14 @@ def delete_pages():
 
 
 @app.route('/api/reorder-rotate', methods=['POST'])
+@limit_rate(limit=15, period=60)
 def reorder_rotate():
     if 'file' not in request.files:
         return jsonify({"error": "No se envió ningún archivo"}), 400
 
     file = request.files['file']
+    if is_file_too_large(file):
+        return jsonify({"error": f"El archivo {file.filename} supera el límite de 10MB"}), 400
 
     try:
         order = json.loads(request.form.get('order', '[]'))
@@ -152,11 +197,14 @@ def reorder_rotate():
 
 
 @app.route('/api/to-markdown', methods=['POST'])
+@limit_rate(limit=15, period=60)
 def to_markdown():
     if 'file' not in request.files:
         return jsonify({"error": "No se envió ningún archivo"}), 400
 
     file = request.files['file']
+    if is_file_too_large(file):
+        return jsonify({"error": f"El archivo {file.filename} supera el límite de 10MB"}), 400
 
     try:
         from markitdown import MarkItDown
