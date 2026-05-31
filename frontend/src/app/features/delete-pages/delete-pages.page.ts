@@ -5,6 +5,7 @@ import { BottomBarComponent } from '../../shared/bottom-bar.component';
 import { PdfApiService } from '../../core/pdf-api.service';
 import { PdfjsService } from '../../core/pdfjs.service';
 import { revokeUrl, triggerDownload } from '../../core/download.util';
+import { PreviewModalComponent } from '../../shared/preview-modal.component';
 
 interface PageThumb {
   pageNumber: number;
@@ -13,7 +14,7 @@ interface PageThumb {
 
 @Component({
   selector: 'app-delete-pages-page',
-  imports: [UploadAreaComponent, SuccessScreenComponent, BottomBarComponent],
+  imports: [UploadAreaComponent, SuccessScreenComponent, BottomBarComponent, PreviewModalComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (showSuccess()) {
@@ -24,7 +25,7 @@ interface PageThumb {
         (restart)="reset()"
       />
     } @else {
-      <div class="w-[90%] max-w-[1000px] flex flex-col items-center grow">
+      <div class="w-[95%] max-w-[1600px] flex flex-col items-center grow">
         @if (!file()) {
           <app-upload-area
             buttonLabel="Seleccionar archivo PDF"
@@ -66,17 +67,32 @@ interface PageThumb {
           <div class="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-4 w-full mb-8">
             @for (p of pages(); track p.pageNumber) {
               <div
-                class="bg-white rounded-xl shadow-md p-2.5 flex flex-col items-center relative cursor-pointer transition select-none hover:-translate-y-0.5 hover:shadow-lg"
+                class="bg-white rounded-xl shadow-md p-2.5 flex flex-col items-center relative cursor-pointer transition select-none hover:-translate-y-0.5 hover:shadow-lg group/item"
                 [class.border-2]="selected().has(p.pageNumber)"
                 [class.border-brand]="selected().has(p.pageNumber)"
                 (click)="togglePage(p.pageNumber)"
               >
-                <img
-                  [src]="p.thumbDataUrl"
-                  [alt]="'Página ' + p.pageNumber"
-                  class="max-w-full h-auto border border-neutral-200 rounded mb-2 bg-neutral-50 transition-opacity"
-                  [class.opacity-35]="selected().has(p.pageNumber)"
-                />
+                <div class="w-full flex items-center justify-center min-h-[120px] border border-neutral-200 rounded bg-neutral-50 mb-2 relative overflow-hidden">
+                  <img
+                    [src]="p.thumbDataUrl"
+                    [alt]="'Página ' + p.pageNumber"
+                    class="max-w-full h-auto transition-opacity"
+                    [class.opacity-35]="selected().has(p.pageNumber)"
+                  />
+                  <!-- Botón Lupa de Vista Previa -->
+                  <button
+                    type="button"
+                    class="absolute top-2 right-2 bg-white/90 border border-neutral-200 rounded-full w-7 h-7 flex items-center justify-center cursor-pointer shadow-sm hover:bg-white hover:border-brand hover:scale-110 transition z-10 opacity-0 group-hover/item:opacity-100 transition-opacity"
+                    (click)="openPreview($event, p.thumbDataUrl, 'Página ' + p.pageNumber)"
+                    title="Vista previa"
+                    aria-label="Ver vista previa"
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-3.5 h-3.5 text-neutral-600">
+                      <circle cx="11" cy="11" r="8"></circle>
+                      <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                  </button>
+                </div>
                 @if (selected().has(p.pageNumber)) {
                   <div class="absolute top-2.5 left-2.5 right-2.5 bottom-8 bg-brand/10 rounded flex items-center justify-center pointer-events-none">
                     <div class="w-12 h-12 rounded-full bg-brand flex items-center justify-center shadow-lg">
@@ -114,6 +130,14 @@ interface PageThumb {
         </app-bottom-bar>
       }
     }
+
+    @if (previewData(); as data) {
+      <app-preview-modal
+        [imageUrl]="data.url"
+        [title]="data.title"
+        (close)="closePreview()"
+      />
+    }
   `,
 })
 export class DeletePagesPage {
@@ -123,6 +147,7 @@ export class DeletePagesPage {
   protected readonly file = signal<File | null>(null);
   protected readonly pages = signal<PageThumb[]>([]);
   protected readonly selected = signal<Set<number>>(new Set());
+  protected readonly previewData = signal<{ url: string; title: string } | null>(null);
   protected readonly loading = signal(false);
   protected readonly processing = signal(false);
   protected readonly showSuccess = signal(false);
@@ -235,5 +260,14 @@ export class DeletePagesPage {
     this.pages.set([]);
     this.selected.set(new Set());
     this.showSuccess.set(false);
+  }
+
+  protected openPreview(event: Event, url: string, title: string): void {
+    event.stopPropagation();
+    this.previewData.set({ url, title });
+  }
+
+  protected closePreview(): void {
+    this.previewData.set(null);
   }
 }

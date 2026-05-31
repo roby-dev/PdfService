@@ -6,6 +6,7 @@ import { PdfApiService } from '../../core/pdf-api.service';
 import { PdfjsService } from '../../core/pdfjs.service';
 import { SortableService } from '../../core/sortable.service';
 import { revokeUrl, triggerDownload } from '../../core/download.util';
+import { PreviewModalComponent } from '../../shared/preview-modal.component';
 
 interface PageThumb {
   pageNumber: number;
@@ -14,7 +15,7 @@ interface PageThumb {
 
 @Component({
   selector: 'app-reorder-rotate-page',
-  imports: [UploadAreaComponent, SuccessScreenComponent, BottomBarComponent],
+  imports: [UploadAreaComponent, SuccessScreenComponent, BottomBarComponent, PreviewModalComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (showSuccess()) {
@@ -25,7 +26,7 @@ interface PageThumb {
         (restart)="reset()"
       />
     } @else {
-      <div class="w-[90%] max-w-[1000px] flex flex-col items-center grow">
+      <div class="w-[95%] max-w-[1600px] flex flex-col items-center grow">
         @if (!file()) {
           <app-upload-area
             buttonLabel="Seleccionar archivo PDF"
@@ -69,15 +70,28 @@ interface PageThumb {
             @for (p of pages(); track p.pageNumber) {
               <div
                 [attr.data-page]="p.pageNumber"
-                class="bg-white rounded-xl shadow-md p-2.5 flex flex-col items-center relative cursor-grab active:cursor-grabbing transition select-none border-2 border-transparent hover:-translate-y-0.5 hover:shadow-lg"
+                class="bg-white rounded-xl shadow-md p-2.5 flex flex-col items-center relative cursor-grab active:cursor-grabbing transition select-none border-2 border-transparent hover:-translate-y-0.5 hover:shadow-lg group/item"
               >
-                <div class="w-full overflow-hidden flex items-center justify-center min-h-[120px] border border-neutral-200 rounded bg-neutral-50 mb-2 relative">
+                <div class="w-full overflow-hidden flex items-center justify-center min-h-[120px] border border-neutral-200 rounded bg-neutral-50 mb-2 relative group/img">
                   <img
                     [src]="p.thumbDataUrl"
                     [alt]="'Página ' + p.pageNumber"
                     class="max-w-full h-auto block transition-transform duration-300"
                     [style.transform]="rotationStyle(p.pageNumber)"
                   />
+                  <!-- Botón Lupa de Vista Previa -->
+                  <button
+                    type="button"
+                    class="absolute top-2 right-2 bg-white/90 border border-neutral-200 rounded-full w-7 h-7 flex items-center justify-center cursor-pointer shadow-sm hover:bg-white hover:border-brand hover:scale-110 transition z-10 opacity-0 group-hover/img:opacity-100 transition-opacity"
+                    (click)="openPreview($event, p.thumbDataUrl, 'Página ' + p.pageNumber, rotationStyle(p.pageNumber))"
+                    title="Vista previa"
+                    aria-label="Ver vista previa"
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-3.5 h-3.5 text-neutral-600">
+                      <circle cx="11" cy="11" r="8"></circle>
+                      <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                  </button>
                 </div>
                 <div class="flex items-center justify-between w-full gap-1">
                   <span class="text-xs text-neutral-600 font-medium whitespace-nowrap">Pág. {{ p.pageNumber }}</span>
@@ -129,6 +143,15 @@ interface PageThumb {
         </app-bottom-bar>
       }
     }
+
+    @if (previewData(); as data) {
+      <app-preview-modal
+        [imageUrl]="data.url"
+        [title]="data.title"
+        [rotation]="data.rotation"
+        (close)="closePreview()"
+      />
+    }
   `,
 })
 export class ReorderRotatePage {
@@ -142,6 +165,7 @@ export class ReorderRotatePage {
   protected readonly loading = signal(false);
   protected readonly processing = signal(false);
   protected readonly showSuccess = signal(false);
+  protected readonly previewData = signal<{ url: string; title: string; rotation: string } | null>(null);
 
   private readonly grid = viewChild<ElementRef<HTMLDivElement>>('grid');
   private sortableInstance: any = null;
@@ -285,5 +309,14 @@ export class ReorderRotatePage {
     this.showSuccess.set(false);
     this.sortableInstance?.destroy();
     this.sortableInstance = null;
+  }
+
+  protected openPreview(event: Event, url: string, title: string, rotation: string): void {
+    event.stopPropagation();
+    this.previewData.set({ url, title, rotation });
+  }
+
+  protected closePreview(): void {
+    this.previewData.set(null);
   }
 }
