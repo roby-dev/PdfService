@@ -2,29 +2,38 @@ from flask import Flask, request, send_file, jsonify
 import pikepdf
 import io
 import json
+import threading
 import time
 from collections import defaultdict
 from functools import wraps
 
-# Simple in-memory rate limiter (15 requests per minute per IP for processing)
+from werkzeug.exceptions import RequestEntityTooLarge
+from werkzeug.middleware.proxy_fix import ProxyFix
+
+# In-memory rate limiter (15 requests per minute per IP for processing).
+# State lives in one process, so gunicorn must run a single worker (see Dockerfile).
 ip_requests = defaultdict(list)
+ip_requests_lock = threading.Lock()
 
 def limit_rate(limit=15, period=60):
     def decorator(f):
         @wraps(f)
         def wrapped(*args, **kwargs):
-            ip = request.headers.get('X-Forwarded-For', request.remote_addr)
-            if ip and ',' in ip:
-                ip = ip.split(',')[0].strip()
-            
+            ip = request.remote_addr
             now = time.time()
-            # Clean up old timestamps
-            ip_requests[ip] = [t for t in ip_requests[ip] if now - t < period]
-            
-            if len(ip_requests[ip]) >= limit:
-                return jsonify({"error": "Demasiadas peticiones. Por favor, intenta de nuevo más tarde."}), 429
-            
-            ip_requests[ip].append(now)
+
+            with ip_requests_lock:
+                # Drop expired timestamps, and clients left with none
+                for key in list(ip_requests):
+                    ip_requests[key] = [t for t in ip_requests[key] if now - t < period]
+                    if not ip_requests[key]:
+                        del ip_requests[key]
+
+                if len(ip_requests[ip]) >= limit:
+                    return jsonify({"error": "Demasiadas peticiones. Por favor, intenta de nuevo más tarde."}), 429
+
+                ip_requests[ip].append(now)
+
             return f(*args, **kwargs)
         return wrapped
     return decorator
@@ -37,7 +46,23 @@ def is_file_too_large(file, max_size=10 * 1024 * 1024):
 
 app = Flask(__name__)
 
+# nginx is the only proxy in front of the app, so only its X-Forwarded-For entry is trusted.
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1)
+
 app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024
+
+
+def processing_error(error):
+    if isinstance(error, (pikepdf.PdfError, pikepdf.PasswordError)):
+        return jsonify({"error": "El archivo PDF no es válido, está dañado o protegido con contraseña"}), 400
+
+    app.logger.exception("Failed to process request")
+    return jsonify({"error": "No se pudo procesar el archivo"}), 500
+
+
+@app.errorhandler(RequestEntityTooLarge)
+def request_too_large(_error):
+    return jsonify({"error": "La solicitud es demasiado grande"}), 413
 
 
 @app.route('/api/health', methods=['GET'])
@@ -85,7 +110,7 @@ def merge_pdfs():
         )
 
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return processing_error(e)
 
 
 @app.route('/api/delete-pages', methods=['POST'])
@@ -115,11 +140,11 @@ def delete_pages():
         pdf = pikepdf.Pdf.open(file.stream)
         total = len(pdf.pages)
 
-        if len(pages_to_delete) >= total:
+        indices = sorted(set(p - 1 for p in pages_to_delete if 1 <= p <= total), reverse=True)
+
+        if len(indices) >= total:
             pdf.close()
             return jsonify({"error": "No se pueden eliminar todas las páginas"}), 400
-
-        indices = sorted(set(p - 1 for p in pages_to_delete if 1 <= p <= total), reverse=True)
 
         for idx in indices:
             del pdf.pages[idx]
@@ -137,7 +162,7 @@ def delete_pages():
         )
 
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return processing_error(e)
 
 
 @app.route('/api/reorder-rotate', methods=['POST'])
@@ -193,7 +218,7 @@ def reorder_rotate():
         )
 
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return processing_error(e)
 
 
 @app.route('/api/to-markdown', methods=['POST'])
@@ -227,7 +252,7 @@ def to_markdown():
         return jsonify({"markdown": result.text_content, "filename": original_name}), 200
 
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return processing_error(e)
 
 
 if __name__ == '__main__':
