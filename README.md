@@ -1,6 +1,6 @@
-# PdfService
+# DocTools
 
-Servicio PDF con HTTPS via nginx reverse proxy.
+Herramientas para PDF y documentos con HTTPS via nginx reverse proxy.
 
 ## Requisitos
 
@@ -100,7 +100,7 @@ docker compose logs -f
 Con los valores por defecto:
 
 - `http://localhost:8874` → redirige a HTTPS
-- `https://localhost:8875` → PdfService
+- `https://localhost:8875` → DocTools
 
 ---
 

@@ -10,7 +10,7 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
       <header class="w-full bg-white shadow-[0_2px_10px_rgba(0,0,0,0.05)] py-4 text-center mb-8">
         <div class="flex items-center justify-center gap-3">
           <img src="assets/logo.png" alt="Logo" class="h-9 w-auto rounded-lg" />
-          <h1 class="text-brand text-3xl font-bold m-0">Servicios PDF</h1>
+          <h1 class="text-brand text-3xl font-bold m-0">DocTools</h1>
         </div>
         <nav class="flex justify-center gap-8 mt-2">
           <a
