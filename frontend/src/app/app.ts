@@ -51,7 +51,7 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 
       <footer class="w-full text-center py-6 mt-8 text-neutral-400 text-xs border-t border-neutral-100 pb-28">
         <p class="font-medium text-neutral-500 mb-1">
-          🔒 Privacidad garantizada: Los archivos se procesan en memoria y se eliminan inmediatamente tras finalizar la operación. No almacenamos tus documentos.
+          Privacidad garantizada: Los archivos se procesan en memoria y se eliminan inmediatamente tras finalizar la operación. No almacenamos tus documentos.
         </p>
         <p>© 2026 - Servicios PDF</p>
       </footer>
