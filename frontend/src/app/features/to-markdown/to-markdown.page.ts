@@ -132,7 +132,7 @@ import { PdfApiService } from '../../core/pdf-api.service';
   `,
 })
 export class ToMarkdownPage {
-  protected readonly acceptedExtensions = '.pdf,.docx,.pptx,.xlsx,.xls,.html,.htm,.csv,.json,.xml,.zip,.jpg,.jpeg,.png,.wav,.mp3';
+  protected readonly acceptedExtensions = '.pdf,.docx,.pptx,.xlsx,.xls,.html,.htm,.csv,.json,.xml,.zip';
   private readonly api = inject(PdfApiService);
 
   protected readonly selectedFile = signal<File | null>(null);
@@ -147,7 +147,6 @@ export class ToMarkdownPage {
   private readonly allowedExtensions = new Set([
     '.pdf', '.docx', '.pptx', '.xlsx', '.xls',
     '.html', '.htm', '.csv', '.json', '.xml', '.zip',
-    '.jpg', '.jpeg', '.png', '.wav', '.mp3',
   ]);
 
   protected onFileSelected(files: File[]): void {
